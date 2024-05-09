@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 function Navbar() {
   return (
     <>
-      <nav className="flex justify-between h-[50px]">
+      <nav className="flex justify-between h-[50px] bg-blue-100">
         <h1 className="w-[100px] bg-blue-300 flex justify-center items-center">
           로고
         </h1>
