@@ -4,6 +4,7 @@ import CardItem from "../Components/CardItem";
 import { continents, prices } from "../utils/filterData";
 import CheckBox from "../Components/CheckBox";
 import SerachInp from "../Components/SerachInp";
+import RadioBox from "../Components/RadioBox";
 
 function MainPage() {
   const [products, setProducts] = useState([]);
@@ -13,7 +14,7 @@ function MainPage() {
   const [hasMore, setHasMore] = useState(false);
   const [filters, setFilters] = useState({
     continents: [1, 2], //1,2,4 이런 체크한 id가 들어간다.
-    price: [],
+    price: [], //0,199 같은 영역이 들어온다
   });
 
   //search
@@ -24,11 +25,13 @@ function MainPage() {
     limit,
     loadMore = false,
     filters = {},
+    searchForm = "",
   }) => {
     const params = {
       skip,
       limit,
       filters,
+      searchForm,
     };
     try {
       const res = await axiosInstance.get("/products", { params });
@@ -56,20 +59,41 @@ function MainPage() {
       limit,
       loadMore: true,
       filters,
+      searchForm,
     };
     fetchProducts(body);
     setSkip(Number(skip) + Number(limit));
   }
 
-  function handleFilter(newFilteredData) {
+  function handleFilter(newFilteredData, cate) {
+    //cate는 continents또는 price가 들어온다
     //체크박스 클릭시 해당 _id가 담겨서 오게했다.
     console.log(newFilteredData);
     const newFilters = { ...filters }; //filters를 대괄호 벗겨서 복사한다.
-    newFilters["continents"] = newFilteredData; //contitnents에 newFilteredData를 넣는다.
+    newFilters[cate] = newFilteredData; //contitnents에 newFilteredData를 넣는다.
+
+    if (cate === "price") {
+      const priceValues = handlePrice(newFilteredData);
+      newFilters[cate] = priceValues;
+    }
 
     showFilterResult(newFilters); //DB에 가서 저장하기위해 필요하다.
-
     setFilters(newFilters); //화면에 보여주는걸 변경한다.
+  }
+
+  //라디오
+  function handlePrice(value) {
+    let array = [];
+
+    for (let key in prices) {
+      //key 는 prices의 _id, name, array가 들어온다
+      if (prices[key]._id === parseInt(value, 10)) {
+        //prices의 _id값과 value값이 같으면
+        array = prices[key].array; //prices의 array값으로 저장한다.
+      }
+    }
+
+    return array;
   }
 
   function showFilterResult(filters) {
@@ -78,6 +102,7 @@ function MainPage() {
       skip: 0,
       limit,
       filters,
+      searchForm,
     };
     fetchProducts(body);
     setSkip(0);
@@ -86,6 +111,14 @@ function MainPage() {
   //search 함수
   function handleSearch(e) {
     console.log(e.target.value);
+    const body = {
+      skip: 0,
+      limit,
+      filters,
+      searchForm: e.target.value,
+    };
+    fetchProducts(body);
+    setSkip(0);
     setSearchForm(e.target.value);
   }
 
@@ -102,7 +135,16 @@ function MainPage() {
               continents={continents}
               checkedContinents={filters.continents}
               onFilters={(filters) => {
-                handleFilter(filters);
+                handleFilter(filters, "continents");
+              }}
+            />
+          </div>
+          <div>
+            <RadioBox
+              prices={prices}
+              checkedPrice={filters.price}
+              onFilters={(filters) => {
+                handleFilter(filters, "price");
               }}
             />
           </div>

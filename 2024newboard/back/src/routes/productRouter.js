@@ -16,15 +16,28 @@ porductRouter.get("/", async (req, res) => {
   const skip = req.query.skip ? Number(req.query.skip) : 0;
   const sortBy = req.query.sortBy ? req.query.sortBy : "_id"; //_id로 정렬
   const order = req.query.order ? req.query.order : "desc"; //오름차순
+  const search = req.query.searchForm; //검색 받아옴
 
   //체크박스
   let findArgs = {};
   for (let key in req.query.filters) {
     if (req.query.filters[key].length > 0) {
-      findArgs[key] = req.query.filters[key];
+      if (key === "price") {
+        findArgs[key] = {
+          $gte: req.query.filters[key][0], //선택한 price의 배열의 1번째보다 gt=grater than
+          $lte: req.query.filters[key][1],
+        };
+      } else {
+        findArgs[key] = req.query.filters[key];
+      }
     }
   }
-  console.log(findArgs);
+  console.log(search);
+
+  if (search) {
+    findArgs["$text"] = { $search: search }; //$search는 몽구스에서 사용하는 단어이다.
+  }
+
   try {
     const products = await Product.find(findArgs)
       .sort([[sortBy, order]]) //대괄호 두개 쓴다
